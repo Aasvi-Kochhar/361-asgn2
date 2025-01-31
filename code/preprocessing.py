@@ -9,7 +9,8 @@ import nltk
 
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
-nltk.download('punkt')
+# nltk.download('punkt')
+nltk.download('punkt_tab')  # Made this change so code would run
 stemmer = PorterStemmer()
 
 import string

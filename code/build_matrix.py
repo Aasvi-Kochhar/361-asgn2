@@ -10,6 +10,7 @@ The program will be run from the root of the repository.
 import sys
 import json
 import preprocessing # implements tokenize and normalize text
+import os
 
 
 def read_documents(collection):
@@ -18,9 +19,53 @@ def read_documents(collection):
     '''
 
     assert type(collection) == str
+    extension = "_bool.ALL"
     corpus_file = './collections/' + collection + extension
-
     documents = {}
+
+    # From A1
+    # with open(corpus_file, "r") as file:
+    with open(os.path.join("ignore_this", "shortened.txt")) as file:
+        current_id = 0
+        content = ""
+        previous_line = None
+
+        while True:
+            line = file.readline()
+            # If unstripped line is empty, it is the end of the file 
+            if not line:
+                break
+            line = line.strip()
+            # Skip empty lines
+            if not line:  
+                continue
+            # If line starts with ".I ", we are onto a new document
+            if line.startswith(".I"):
+                #  Next line needs to start with .W
+                if not file.readline().strip().startswith(".W"):
+                    raise Exception("ERROR: Missing .W!")
+                # Add any content to the dictionary if we have any
+                if len(content.strip()) > 0:
+                    documents[current_id] = content.strip()
+                    content = ""
+                # Get the ID after the ".I " 
+                current_id = int(line[len(".I "):])
+                previous_line = line
+            # If line starts with ".W ", start reading the words/content
+            elif line.startswith(".W"):
+                if not previous_line.startswith(".I"):
+                    raise Exception("ERROR: Missing .I!")
+                else:
+                    previous_line = line
+                continue
+            # Content of the document
+            else:
+                # Add a space between lines to avoid concatenation issues
+                content += line + " "
+                previous_line = line
+        # Add remaining content if there's any
+        if len(content.strip()) > 0:
+            documents[current_id] = content.strip()
 
     # TODO: fill in the rest and check for errors
 
@@ -40,9 +85,13 @@ def build_incidence_matrix(documents):
     
     for docID in documents:
         original_text = documents[docID]
-        tokenized[docID] = normalize(tokenize(original_text))
+        tokenized[docID] = preprocessing.normalize(preprocessing.tokenize(original_text))
+    print(tokenized)
 
     # TODO: fill in the rest
+    matrix["_M_"] = len(tokenized)
+    print(matrix)
+    # For each token found maybe count it? Idk
 
     return matrix
 
@@ -56,7 +105,15 @@ def write_matrix(collection, matrix):
     matrix_file = './processed/' + collection + '.matrix.json'
     
     # TODO: fill in the rest
-    
+
+def test_tokenize():
+    s = "I take a trip to the candy store to go and buy some treats."
+    print(preprocessing.normalize(preprocessing.tokenize(s)))
+
+def main():
+    collection_name = sys.argv[1]
+    documents = read_documents(collection_name)
+    build_incidence_matrix(documents)
 
 if __name__ == "__main__":
     '''
@@ -65,5 +122,7 @@ if __name__ == "__main__":
     # TODO: read the collection name from command line
     # TODO: check for invalid parameters
     # TODO: print 'SUCCESS' to STDOUT if all went well
+    main()
+    # test_tokenize()
 
     exit(0)
