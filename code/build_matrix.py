@@ -104,7 +104,14 @@ def write_matrix(collection, matrix):
     assert type(matrix) == dict
     matrix_file = './processed/' + collection + '.matrix.json'
     
-    # TODO: fill in the rest
+    # Checking if the output file already exists in the processed folder
+    if os.path.exists(matrix_file):
+        print("Error, this output file already exists!")
+        exit(1)
+    
+    # Dumping matrix into a new json file
+    with open(matrix_file, "w") as output_file:
+        json.dump(matrix, output_file, indent=3)
 
 def test_tokenize():
     s = "I take a trip to the candy store to go and buy some treats."
