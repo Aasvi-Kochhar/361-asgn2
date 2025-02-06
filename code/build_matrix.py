@@ -24,7 +24,6 @@ def read_documents(collection):
     documents = {}
 
     # From A1
-    # with open(corpus_file, "r") as file:
     with open(file, "r") as file:
         current_id = 0
         content = ""
@@ -41,8 +40,8 @@ def read_documents(collection):
                 continue
             # If line starts with ".I ", we are onto a new document
             if line.startswith(".I"):
-                if len(documents) == 3:  # Stop after 4 documents
-                    break
+                # if len(documents) == 3:  # Stop after 4 documents
+                #     break
                 #  Next line needs to start with .W
                 if not file.readline().strip().startswith(".W"):
                     raise Exception("ERROR: Missing .W!")
@@ -91,26 +90,16 @@ def build_incidence_matrix(documents):
     
     matrix['_M_'] = len(documents) 
 
-    #unique_terms = set()
-    #for tokens in tokenized.values():  
-        #unique_terms.update(tokens) 
-    #unique_terms = sorted(unique_terms)
-    #term_number = {} 
-    #counter = 1  #
-
-    #for term in unique_terms:
-        #term_number[term] = f"t{counter}"  
-        #counter += 1        
-
-    # Build term-document mappings
+    # Create a row for each term and have the length be the number of documents
     for docID, tokens in tokenized.items():
         for term in tokens:
             if term not in matrix:
-                # we create a row for it
                 matrix[term] = [0] * matrix['_M_']
-            else:
-                # Set the term to 1 in the spot that corresponds to its docID to indicate that it appears in that document
-                matrix[term][docID - 1] = 1  
+    
+    # Now we count the number of times a term appears in each document
+    for docID, tokens in tokenized.items():
+        for term in tokens:
+            matrix[term][docID - 1] += 1
 
     return matrix
 
@@ -125,8 +114,7 @@ def write_matrix(collection, matrix):
     
     # Checking if the output file already exists in the processed folder
     if os.path.exists(matrix_file):
-        print("Error, this output file already exists!")
-        exit(1)
+        raise Exception("Error, this output file already exists!")
     
     # Dumping matrix into a new json file
     with open(matrix_file, "w") as output_file:
@@ -137,21 +125,26 @@ def test_tokenize():
     print(preprocessing.normalize(preprocessing.tokenize(s)))
 
 def main():
-    collection_name = sys.argv[1]
-    documents = read_documents(collection_name)
-    matrix = build_incidence_matrix(documents)
-    write_matrix(collection_name, matrix)
-    #print("SUCCESS")
-    print(matrix)
+    try:
+        collection_name = sys.argv[1]
+
+        # throw an exception if if there are no files inside ./collections/ corresponding to the collection name provided
+        split_collections = [os.path.splitext(i) for i in os.listdir("collections")]
+        collections = [i[0] for i in split_collections if i[1] != ".md"]  # ignore readme file
+        if collection_name + "_bool" not in collections:
+            print("Error: no files corresponding to the collection name provided!")
+            exit(1)
+
+        documents = read_documents(collection_name)
+        matrix = build_incidence_matrix(documents)
+        write_matrix(collection_name, matrix)
+        # print(matrix)
+        # print(len(matrix))
+    except Exception as e:
+        print(e)
+    else:
+        print("SUCCESS")
 
 if __name__ == "__main__":
-    '''
-    main() function
-    '''
-    # TODO: read the collection name from command line
-    # TODO: check for invalid parameters
-    # TODO: print 'SUCCESS' to STDOUT if all went well
     main()
-    # test_tokenize()
-
     exit(0)
