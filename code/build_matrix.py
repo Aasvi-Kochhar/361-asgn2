@@ -20,12 +20,12 @@ def read_documents(collection):
 
     assert type(collection) == str
     extension = "_bool.ALL"
-    corpus_file = './collections/' + collection + extension
+    file = './collections/' + collection + extension
     documents = {}
 
     # From A1
     # with open(corpus_file, "r") as file:
-    with open(os.path.join("ignore_this", "shortened.txt")) as file:
+    with open(file, "r") as file:
         current_id = 0
         content = ""
         previous_line = None
@@ -41,6 +41,8 @@ def read_documents(collection):
                 continue
             # If line starts with ".I ", we are onto a new document
             if line.startswith(".I"):
+                if len(documents) == 3:  # Stop after 4 documents
+                    break
                 #  Next line needs to start with .W
                 if not file.readline().strip().startswith(".W"):
                     raise Exception("ERROR: Missing .W!")
@@ -79,19 +81,36 @@ def build_incidence_matrix(documents):
     '''
 
     assert type(documents) == dict
-
+    
     matrix = {}
     tokenized = {}
     
-    for docID in documents:
-        original_text = documents[docID]
-        tokenized[docID] = preprocessing.normalize(preprocessing.tokenize(original_text))
-    print(tokenized)
+    for docID, text in documents.items():
+       #original_text = documents[docID]
+        tokenized[docID] = preprocessing.normalize(preprocessing.tokenize(text))
+    
+    matrix['_M_'] = len(documents) 
 
-    # TODO: fill in the rest
-    matrix["_M_"] = len(tokenized)
-    print(matrix)
-    # For each token found maybe count it? Idk
+    #unique_terms = set()
+    #for tokens in tokenized.values():  
+        #unique_terms.update(tokens) 
+    #unique_terms = sorted(unique_terms)
+    #term_number = {} 
+    #counter = 1  #
+
+    #for term in unique_terms:
+        #term_number[term] = f"t{counter}"  
+        #counter += 1        
+
+    # Build term-document mappings
+    for docID, tokens in tokenized.items():
+        for term in tokens:
+            if term not in matrix:
+                # we create a row for it
+                matrix[term] = [0] * matrix['_M_']
+            else:
+                # Set the term to 1 in the spot that corresponds to its docID to indicate that it appears in that document
+                matrix[term][docID - 1] = 1  
 
     return matrix
 
@@ -120,7 +139,10 @@ def test_tokenize():
 def main():
     collection_name = sys.argv[1]
     documents = read_documents(collection_name)
-    build_incidence_matrix(documents)
+    matrix = build_incidence_matrix(documents)
+    write_matrix(collection_name, matrix)
+    #print("SUCCESS")
+    print(matrix)
 
 if __name__ == "__main__":
     '''
