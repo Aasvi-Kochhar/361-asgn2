@@ -71,12 +71,32 @@ def fix_precedence_NOT(expression):
     Finds and "wraps" all :not: exp in the query expression as discussed in class.
     '''
     assert type(expression) == list
+    i = 0
+    while i < len(expression):
+        if expression[i] == ":not:":
+            # Find end index
+            end_idx = find_par_exp_forward(expression, i + 1)
+            # Wrap in brackets
+            expression[i:end_idx + 1] = ["("] + expression[i:end_idx + 1] + [")"]
+        i += 1
+    return expression
 
 def fix_precedence_AND(expression, start=0):
     '''
     Finds and "wraps" all exp1 :and: exp2 in the query expression as discussed in class.
     '''
     assert type(expression) == list
+    i = start
+    while i < len(expression):
+        if expression[i] == ":and:":
+            # Find start index
+            start_idx = find_par_exp_backward(expression, i - 1)
+            # Find end index
+            end_idx = find_par_exp_forward(expression, i + 1)
+            # Wrap in brackets
+            expression[start_idx:end_idx + 1] = ["("] + expression[start_idx:end_idx+1] + [")"]
+        i += 1
+    return expression
 
 def fix_precedence(expression):
     '''
